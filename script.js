@@ -1,4 +1,10 @@
 let src = null;
+let cvReady = false;
+
+function onOpenCvReady() {
+    console.log("OpenCV loaded");
+    cvReady = true;
+}
 
 document.getElementById('uploadImage').addEventListener('change', function(e) {
 
