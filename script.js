@@ -31,6 +31,11 @@ document.getElementById('uploadImage').addEventListener('change', function(e) {
 
 function generateFeatures() {
 
+    if (!cvReady) {
+        alert("OpenCV is still loading, please wait 2–3 seconds...");
+        return;
+    }
+
     if (!src) {
         alert("Upload image first!");
         return;
@@ -55,7 +60,6 @@ function generateFeatures() {
     descriptors.delete();
     output.delete();
 }
-
 function saveImage() {
     let canvas = document.getElementById("canvasOutput");
     let link = document.createElement("a");
