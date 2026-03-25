@@ -1,0 +1,98 @@
+/* General Page */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2f7, #d9e4f5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Title */
+h1 {
+    margin-top: 25px;
+    color: #2c3e50;
+    font-size: 28px;
+}
+
+/* Main Container */
+.container {
+    background: white;
+    padding: 25px;
+    margin-top: 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 700px;
+    text-align: center;
+}
+
+/* Controls */
+.controls {
+    margin-bottom: 20px;
+}
+
+/* File Input */
+input[type="file"] {
+    margin-bottom: 10px;
+}
+
+/* Buttons */
+button {
+    padding: 10px 16px;
+    margin: 5px;
+    border: none;
+    border-radius: 10px;
+    background: #3498db;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+button:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+/* Dropdown */
+select {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin-left: 5px;
+}
+
+/* Canvas */
+canvas {
+    margin-top: 15px;
+    max-width: 100%;
+    border-radius: 12px;
+    border: 2px solid #ddd;
+}
+
+/* AR Scene */
+a-scene {
+    margin-top: 30px;
+    width: 100%;
+    height: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #ccc;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 22px;
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 8px;
+    }
+}
