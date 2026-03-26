@@ -1,4 +1,68 @@
+let cvReady = false;
 let src = null;
+
+function onOpenCvReady() {
+    console.log("OpenCV loaded");
+    cvReady = true;
+    document.getElementById("status").innerText = "OpenCV Ready!";
+}
+
+// Handle image upload
+document.getElementById("fileInput").addEventListener("change", function(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = function(event) {
+        let img = new Image();
+        img.onload = function() {
+            let canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            if (src) src.delete();
+            src = cv.imread(canvas);
+            cv.imshow('canvasOutput', src);
+        }
+        img.src = event.target.result;
+    }
+    reader.readAsDataURL(file);
+});
+
+// Generate Features button
+document.getElementById("generateBtn").addEventListener("click", generateFeatures);
+
+function generateFeatures() {
+    if (!cvReady) {
+        alert("OpenCV is still loading, please wait...");
+        return;
+    }
+
+    if (!src) {
+        alert("Upload an image first!");
+        return;
+    }
+
+    let gray = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+    let keypoints = new cv.KeyPointVector();
+    let descriptors = new cv.Mat();
+
+    let orb = new cv.ORB();
+    orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
+
+    let output = new cv.Mat();
+    cv.drawKeypoints(gray, keypoints, output, [255, 0, 0, 255]);
+
+    cv.imshow('canvasOutput', output);
+
+    gray.delete();
+    keypoints.delete();
+    descriptors.delete();
+    output.delete();
+}let src = null;
 let cvReady = false;
 
 function onOpenCvReady() {
