@@ -1,38 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Feature-based Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Load local OpenCV.js -->
+    <script src="opencv.js" onload="onOpenCvReady();"></script>
+
+    <!-- A-Frame + AR.js -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+</head>
 <body>
+    <div class="container">
+        <h1>AR Feature-based Marker Tracker</h1>
+        <p id="status">Loading OpenCV...</p>
 
-<h1>Feature-Based AR Web App</h1>
+        <div class="controls">
+            <input type="file" id="fileInput" accept="image/*">
+            <button id="generateBtn">Generate Features</button>
+        </div>
 
-<div class="container">
+        <canvas id="canvasOutput"></canvas>
 
-    <div class="controls">
-        <input type="file" id="uploadImage">
-
-        <br>
-
-        <!--<script async src="https://cdn.jsdelivr.net/npm/opencv.js@4.7.0/opencv.js" onload="onOpenCvReady();"></script>-->
-        <script async src="script.js" onload="onOpenCvReady();" type="text/javascript"></script>
-        <button onclick="generateFeatures()">Generate Features</button>
-        <button onclick="saveImage()">Save Image</button>
-
-        <br>
-
-        <select id="objectSelector">
-            <option value="box">Cube</option>
-            <option value="sphere">Sphere</option>
-            <option value="cone">Cone</option>
-        </select>
+        <h2>AR Scene</h2>
+        <a-scene embedded arjs>
+            <a-marker type="pattern" url="marker.patt">
+                <a-box position="0 0.5 0" rotation="0 45 0" color="#4CC3D9" scale="0.5 0.5 0.5"></a-box>
+            </a-marker>
+            <a-entity camera></a-entity>
+        </a-scene>
     </div>
 
-    <canvas id="canvasOutput"></canvas>
-
-</div>
-
-<!-- AR Scene -->
-<a-scene embedded arjs>
-    <a-marker type="pattern" url="pattern-raemz.patt">
-        <a-entity id="arObject" position="0 0.5 0"></a-entity>
-    </a-marker>
-    <a-entity camera></a-entity>
-</a-scene>
-    
+    <script src="script.js"></script>
 </body>
+</html>
