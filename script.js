@@ -1,10 +1,11 @@
 let cvReady = false;
 let src = null;
 
+// OpenCV loaded callback
 function onOpenCvReady() {
     console.log("OpenCV loaded");
     cvReady = true;
-    document.getElementById("status").innerText = "OpenCV Ready!";
+    document.getElementById("status").innerText = "OpenCV Ready! Upload an image.";
 }
 
 // Handle image upload
@@ -16,14 +17,22 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
     reader.onload = function(event) {
         let img = new Image();
         img.onload = function() {
-            let canvas = document.createElement('canvas');
+            // Use the visible canvas
+            let canvas = document.getElementById('canvasOutput');
             canvas.width = img.width;
             canvas.height = img.height;
             let ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0);
-            if (src) src.delete();
-            src = cv.imread(canvas);
-            cv.imshow('canvasOutput', src);
+
+            // Read image into OpenCV
+            try {
+                if (src) src.delete();
+                src = cv.imread(canvas); // src now contains the image
+                document.getElementById("status").innerText = "Image loaded! Click Generate Features.";
+            } catch (err) {
+                console.error(err);
+                document.getElementById("status").innerText = "Failed to load image. Try a smaller file.";
+            }
         }
         img.src = event.target.result;
     }
@@ -31,9 +40,7 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
 });
 
 // Generate Features button
-document.getElementById("generateBtn").addEventListener("click", generateFeatures);
-
-function generateFeatures() {
+document.getElementById("generateBtn").addEventListener("click", function() {
     if (!cvReady) {
         alert("OpenCV is still loading, please wait...");
         return;
@@ -44,113 +51,26 @@ function generateFeatures() {
         return;
     }
 
+    // Convert to grayscale
     let gray = new cv.Mat();
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
+    // Detect keypoints with ORB
     let keypoints = new cv.KeyPointVector();
     let descriptors = new cv.Mat();
-
     let orb = new cv.ORB();
     orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
 
+    // Draw keypoints on canvas
     let output = new cv.Mat();
     cv.drawKeypoints(gray, keypoints, output, [255, 0, 0, 255]);
-
     cv.imshow('canvasOutput', output);
 
+    // Clean up
     gray.delete();
     keypoints.delete();
     descriptors.delete();
     output.delete();
-}let src = null;
-let cvReady = false;
 
-function onOpenCvReady() {
-    console.log("OpenCV loaded");
-    cvReady = true;
-}
-
-document.getElementById('uploadImage').addEventListener('change', function(e) {
-
-    let file = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.onload = function(event) {
-        let img = new Image();
-        img.onload = function() {
-            let canvas = document.getElementById('canvasOutput');
-            let ctx = canvas.getContext('2d');
-
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            ctx.drawImage(img, 0, 0);
-            src = cv.imread(canvas);
-        }
-        img.src = event.target.result;
-    }
-
-    reader.readAsDataURL(file);
-});
-
-function generateFeatures() {
-
-    if (!cvReady) {
-        alert("OpenCV is still loading, please wait 2–3 seconds...");
-        return;
-    }
-
-    if (!src) {
-        alert("Upload image first!");
-        return;
-    }
-
-    let gray = new cv.Mat();
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-
-    let keypoints = new cv.KeyPointVector();
-    let descriptors = new cv.Mat();
-
-    let orb = new cv.ORB();
-    orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
-
-    let output = new cv.Mat();
-    cv.drawKeypoints(gray, keypoints, output, [255, 0, 0, 255]);
-
-    cv.imshow('canvasOutput', output);
-
-    gray.delete();
-    keypoints.delete();
-    descriptors.delete();
-    output.delete();
-}
-function saveImage() {
-    let canvas = document.getElementById("canvasOutput");
-    let link = document.createElement("a");
-    link.download = "features.png";
-    link.href = canvas.toDataURL();
-    link.click();
-}
-
-
-// 🔥 Change AR Object
-document.getElementById("objectSelector").addEventListener("change", function() {
-
-    let obj = document.getElementById("arObject");
-    let value = this.value;
-
-    if (value === "box") {
-        obj.setAttribute("geometry", "primitive: box");
-        obj.setAttribute("material", "color: red");
-    }
-
-    if (value === "sphere") {
-        obj.setAttribute("geometry", "primitive: sphere");
-        obj.setAttribute("material", "color: blue");
-    }
-
-    if (value === "cone") {
-        obj.setAttribute("geometry", "primitive: cone");
-        obj.setAttribute("material", "color: green");
-    }
+    document.getElementById("status").innerText = `Features generated: ${keypoints.size()} keypoints`;
 });
