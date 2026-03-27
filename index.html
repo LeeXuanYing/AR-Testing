@@ -34,32 +34,26 @@
 
         <div class="canvas-grid">
 
-    <div>
-        <h3>Original</h3>
-        <canvas id="canvasInput"></canvas>
-    </div>
+            <div>
+                <h3>Original</h3>
+                <canvas id="canvasInput"></canvas>
+            </div>
 
-    <div>
-        <h3>Grayscale</h3>
-        <canvas id="canvasGray"></canvas>
-        <br>
-        <button onclick="saveImage('canvasGray', 'grayscale.png')">
-            Save Grayscale
-        </button>
-    </div>
+            <div>
+                <h3>Grayscale</h3>
+                <canvas id="canvasGray"></canvas>
+                <button id="saveGrayBtn">Save Grayscale</button>
+            </div>
 
-    <div>
-        <h3>ORB Features</h3>
-        <canvas id="canvasOutput"></canvas>
-        <br>
-        <button onclick="saveImage('canvasOutput', 'orb_features.png')">
-            Save ORB Features
-        </button>
-    </div>
+            <div>
+                <h3>ORB Features</h3>
+                <canvas id="canvasOutput"></canvas>
+                <button id="saveOrbBtn">Save ORB Features</button>
+            </div>
 
-</div>
+        </div>
 
-        <!-- AR Section -->
+        <!-- AR -->
         <h2>AR Scene</h2>
 
         <div class="ar-container">
@@ -88,6 +82,7 @@
 
     </div>
 
+    <!-- JS LAST -->
     <script src="script.js"></script>
 </body>
 </html>
