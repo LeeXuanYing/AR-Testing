@@ -5,6 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AR Feature-based Tracker</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- ✅ Define OpenCV callback FIRST -->
+    <script>
+        let cvReady = false;
+
+        function onOpenCvReady() {
+            console.log("OpenCV loaded");
+            cvReady = true;
+            document.getElementById("status").innerText = "OpenCV Ready! Upload an image.";
+        }
+    </script>
+
+    <!-- ✅ Load LOCAL OpenCV (browser version) -->
+    <script src="opencv.js"></script>
+
+    <!-- AR Libraries -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>AR Feature-based Marker Tracker</h1>
+        <p id="status">Loading OpenCV...</p>
+
+        <div class="controls">
+            <input type="file" id="fileInput" accept="image/*">
+            <button id="generateBtn">Generate Features</button>
+        </div>
+
+        <canvas id="canvasOutput"></canvas>
+
+        <h2>AR Scene</h2>
+        <a-scene embedded arjs>
+            <a-marker type="pattern" url="marker.patt">
+                <a-box position="0 0.5 0" rotation="0 45 0"
+                       color="#4CC3D9" scale="0.5 0.5 0.5">
+                </a-box>
+            </a-marker>
+            <a-entity camera></a-entity>
+        </a-scene>
+    </div>
+
+    <!-- Load your script LAST -->
+    <script src="script.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Feature-based Tracker</title>
+    <link rel="stylesheet" href="style.css">
     
     <!-- Load local OpenCV.js -->
     <script src="opencv.js" onload="onOpenCvReady();"></script>
@@ -28,8 +81,32 @@
         <h2>AR Scene</h2>
         <a-scene embedded arjs>
             <a-marker type="pattern" url="marker.patt">
-                <a-box position="0 0.5 0" rotation="0 45 0" color="#4CC3D9" scale="0.5 0.5 0.5"></a-box>
-            </a-marker>
+
+    <!-- Cube -->
+    <a-box id="cube"
+           position="0 0.5 0"
+           color="#4CC3D9"
+           visible="true">
+    </a-box>
+
+    <!-- Sphere -->
+    <a-sphere id="sphere"
+              position="0 0.5 0"
+              radius="0.4"
+              color="#EF2D5E"
+              visible="false">
+    </a-sphere>
+
+    <!-- Cone -->
+    <a-cone id="cone"
+            position="0 0.5 0"
+            radius-bottom="0.4"
+            height="0.8"
+            color="#FFC65D"
+            visible="false">
+    </a-cone>
+
+</a-marker>
             <a-entity camera></a-entity>
         </a-scene>
     </div>
