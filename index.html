@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AR Feature-based Tracker</title>
 
-    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 
-    <!-- ✅ OpenCV (calls function from script.js) -->
+    <!-- OpenCV -->
     <script async src="opencv.js" onload="onOpenCvReady()"></script>
 
-    <!-- ✅ A-Frame (ONLY ONCE) -->
+    <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 
-    <!-- ✅ AR.js (ONLY ONCE) -->
+    <!-- AR.js -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 </head>
 
@@ -30,8 +29,25 @@
             <button id="generateBtn">Generate Features</button>
         </div>
 
-        <!-- Canvas -->
-        <canvas id="canvasOutput"></canvas>
+        <!-- Image Processing Section -->
+        <h2>Image Processing</h2>
+
+        <div class="canvas-grid">
+            <div>
+                <h3>Original Image</h3>
+                <canvas id="canvasInput"></canvas>
+            </div>
+
+            <div>
+                <h3>Grayscale</h3>
+                <canvas id="canvasGray"></canvas>
+            </div>
+
+            <div>
+                <h3>ORB Features</h3>
+                <canvas id="canvasOutput"></canvas>
+            </div>
+        </div>
 
         <!-- AR Section -->
         <h2>AR Scene</h2>
@@ -39,32 +55,18 @@
         <div class="ar-container">
             <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
 
-                <!-- ✅ MAKE SURE marker.patt EXISTS -->
                 <a-marker type="pattern" url="marker.patt">
 
-                    <!-- Cube -->
-                    <a-box id="cube"
-                           position="0 0.5 0"
-                           color="#4CC3D9"
-                           visible="true">
-                    </a-box>
+                    <a-box id="cube" position="0 0.5 0" color="#4CC3D9"></a-box>
 
-                    <!-- Sphere -->
-                    <a-sphere id="sphere"
-                              position="0 0.5 0"
-                              radius="0.4"
-                              color="#EF2D5E"
-                              visible="false">
-                    </a-sphere>
+                    <a-sphere id="sphere" position="0 0.5 0"
+                              radius="0.4" color="#EF2D5E"
+                              visible="false"></a-sphere>
 
-                    <!-- Cone -->
-                    <a-cone id="cone"
-                            position="0 0.5 0"
-                            radius-bottom="0.4"
-                            height="0.8"
+                    <a-cone id="cone" position="0 0.5 0"
+                            radius-bottom="0.4" height="0.8"
                             color="#FFC65D"
-                            visible="false">
-                    </a-cone>
+                            visible="false"></a-cone>
 
                 </a-marker>
 
@@ -74,7 +76,6 @@
 
     </div>
 
-    <!-- ✅ Your JS LAST -->
     <script src="script.js"></script>
 </body>
 </html>
