@@ -99,3 +99,7 @@ canvas {
     font-weight: bold;
     margin-top: 10px;
 }
+
+video[style] {
+    position: absolute !important;
+}
