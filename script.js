@@ -107,9 +107,27 @@ document.getElementById("generateBtn").addEventListener("click", function () {
             `Many features (${count}) → Cone`;
     }
 
+    
+
     // CLEANUP
     gray.delete();
     keypoints.delete();
     descriptors.delete();
     output.delete();
+
+    function saveImage(canvasId, filename) {
+    let canvas = document.getElementById(canvasId);
+
+    if (!canvas) {
+        alert("Canvas not found!");
+        return;
+    }
+
+    // Convert canvas to image
+    let link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+
+    link.click();
+}
 });
