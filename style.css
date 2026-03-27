@@ -1,9 +1,10 @@
-/* General page */
+/* General */
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f7fb;
     margin: 0;
     padding: 0;
+    overflow-x: hidden; /* prevent overflow glitch */
 }
 
 .container {
@@ -11,6 +12,8 @@ body {
     margin: auto;
     padding: 20px;
     text-align: center;
+    position: relative;
+    z-index: 10;
 }
 
 h1, h2 {
@@ -29,18 +32,13 @@ button {
     color: white;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
 }
 
 button:hover {
     background-color: #399ab7;
 }
 
-input[type="file"] {
-    padding: 8px;
-}
-
-/* Canvas layout (3 outputs) */
+/* Canvas layout */
 .canvas-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -64,10 +62,18 @@ canvas {
     overflow: hidden;
     border: 2px solid #ccc;
     border-radius: 10px;
+    z-index: 1;
 }
 
-/* Force AR scene to stay inside container */
-.ar-container a-scene {
+/* Wrapper */
+.ar-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Force AR scene inside */
+.ar-wrapper a-scene {
     position: absolute !important;
     top: 0;
     left: 0;
@@ -75,26 +81,21 @@ canvas {
     height: 100% !important;
 }
 
-/* Fix camera video scaling */
-.ar-container video {
+/* 🔥 CRITICAL FIX: override AR.js fullscreen behavior */
+.ar-wrapper video,
+.ar-wrapper canvas,
+.ar-wrapper .a-canvas {
     position: absolute !important;
-    top: 0;
-    left: 0;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: 100% !important;
     object-fit: cover;
-}
-
-/* Prevent fullscreen canvas */
-.a-canvas {
-    position: absolute !important;
-    width: 100% !important;
-    height: 100% !important;
+    z-index: 1 !important;
 }
 
 /* Status text */
 #status {
     font-weight: bold;
     margin-top: 10px;
-    color: #444;
 }
