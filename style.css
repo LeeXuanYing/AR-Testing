@@ -103,3 +103,8 @@ canvas {
 video[style] {
     position: absolute !important;
 }
+
+.canvas-grid button {
+    margin-top: 10px;
+    font-size: 13px;
+}
