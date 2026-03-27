@@ -1,9 +1,23 @@
 let cvReady = false;
 let src = null;
 
+// GLOBAL save function
+window.saveImage = function(canvasId, filename) {
+    let canvas = document.getElementById(canvasId);
+
+    if (!canvas) {
+        alert("Canvas not found!");
+        return;
+    }
+
+    let link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+};
+
 // OpenCV ready
 function onOpenCvReady() {
-    console.log("OpenCV loaded");
     cvReady = true;
     document.getElementById("status").innerText =
         "OpenCV Ready! Upload an image.";
@@ -11,39 +25,34 @@ function onOpenCvReady() {
 
 // Upload image
 document.getElementById("fileInput").addEventListener("change", function (e) {
+
     let file = e.target.files[0];
     if (!file) return;
 
     let reader = new FileReader();
+
     reader.onload = function (event) {
         let img = new Image();
 
         img.onload = function () {
 
-            // ORIGINAL IMAGE
-            let inputCanvas = document.getElementById("canvasInput");
-            inputCanvas.width = img.width;
-            inputCanvas.height = img.height;
-            let ctx = inputCanvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
+            // Original
+            let canvasInput = document.getElementById("canvasInput");
+            canvasInput.width = img.width;
+            canvasInput.height = img.height;
+            canvasInput.getContext("2d").drawImage(img, 0, 0);
 
-            // Prepare processing canvas
-            let tempCanvas = document.createElement("canvas");
-            tempCanvas.width = img.width;
-            tempCanvas.height = img.height;
-            tempCanvas.getContext("2d").drawImage(img, 0, 0);
+            // temp for processing
+            let temp = document.createElement("canvas");
+            temp.width = img.width;
+            temp.height = img.height;
+            temp.getContext("2d").drawImage(img, 0, 0);
 
-            try {
-                if (src) src.delete();
-                src = cv.imread(tempCanvas);
+            if (src) src.delete();
+            src = cv.imread(temp);
 
-                document.getElementById("status").innerText =
-                    "Image loaded! Click Generate Features.";
-            } catch (err) {
-                console.error(err);
-                document.getElementById("status").innerText =
-                    "Error loading image.";
-            }
+            document.getElementById("status").innerText =
+                "Image loaded! Click Generate Features.";
         };
 
         img.src = event.target.result;
@@ -56,7 +65,7 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
 document.getElementById("generateBtn").addEventListener("click", function () {
 
     if (!cvReady) {
-        alert("OpenCV still loading...");
+        alert("OpenCV not ready");
         return;
     }
 
@@ -65,69 +74,51 @@ document.getElementById("generateBtn").addEventListener("click", function () {
         return;
     }
 
-    // GRAYSCALE
+    // Grayscale
     let gray = new cv.Mat();
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     cv.imshow("canvasGray", gray);
 
-    // ORB FEATURE DETECTION
+    // ORB
     let keypoints = new cv.KeyPointVector();
     let descriptors = new cv.Mat();
     let orb = new cv.ORB();
 
     orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
 
-    // DRAW FEATURES
     let output = new cv.Mat();
     cv.drawKeypoints(src, keypoints, output, [255, 0, 0, 255]);
     cv.imshow("canvasOutput", output);
 
     let count = keypoints.size();
 
-    // AR OBJECT SWITCH
-    let cube = document.getElementById("cube");
-    let sphere = document.getElementById("sphere");
-    let cone = document.getElementById("cone");
-
-    cube.setAttribute("visible", false);
-    sphere.setAttribute("visible", false);
-    cone.setAttribute("visible", false);
+    // AR switching
+    document.getElementById("cube").setAttribute("visible", false);
+    document.getElementById("sphere").setAttribute("visible", false);
+    document.getElementById("cone").setAttribute("visible", false);
 
     if (count < 100) {
-        cube.setAttribute("visible", true);
-        document.getElementById("status").innerText =
-            `Few features (${count}) → Cube`;
+        document.getElementById("cube").setAttribute("visible", true);
     } else if (count < 300) {
-        sphere.setAttribute("visible", true);
-        document.getElementById("status").innerText =
-            `Medium features (${count}) → Sphere`;
+        document.getElementById("sphere").setAttribute("visible", true);
     } else {
-        cone.setAttribute("visible", true);
-        document.getElementById("status").innerText =
-            `Many features (${count}) → Cone`;
+        document.getElementById("cone").setAttribute("visible", true);
     }
 
-    
+    document.getElementById("status").innerText =
+        `Detected ${count} features`;
 
-    // CLEANUP
     gray.delete();
     keypoints.delete();
     descriptors.delete();
     output.delete();
+});
 
-    function saveImage(canvasId, filename) {
-    let canvas = document.getElementById(canvasId);
+// SAVE BUTTON EVENTS (FIXED)
+document.getElementById("saveGrayBtn").addEventListener("click", function () {
+    saveImage("canvasGray", "grayscale.png");
+});
 
-    if (!canvas) {
-        alert("Canvas not found!");
-        return;
-    }
-
-    // Convert canvas to image
-    let link = document.createElement("a");
-    link.download = filename;
-    link.href = canvas.toDataURL("image/png");
-
-    link.click();
-}
+document.getElementById("saveOrbBtn").addEventListener("click", function () {
+    saveImage("canvasOutput", "orb_features.png");
 });
