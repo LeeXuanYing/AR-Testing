@@ -1,136 +1,172 @@
 let cvReady = false;
 let src = null;
-
-// GLOBAL save function
-window.saveImage = function(canvasId, filename) {
-    let canvas = document.getElementById(canvasId);
-
-    if (!canvas) {
-        alert("Canvas not found!");
-        return;
-    }
-
-    let link = document.createElement("a");
-    link.download = filename;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-};
+let previousPoints = [];
 
 // OpenCV ready
 function onOpenCvReady() {
     cvReady = true;
-    document.getElementById("status").innerText =
-        "OpenCV Ready! Upload an image.";
+    document.getElementById("status").innerText = "OpenCV Ready!";
 }
 
-// Upload image
-document.getElementById("fileInput").addEventListener("change", function (e) {
+// Wait until OpenCV loads
+if (typeof cv !== "undefined") {
+    onOpenCvReady();
+} else {
+    document.addEventListener("opencvready", onOpenCvReady);
+}
+
+// Load image
+document.getElementById("imageInput").addEventListener("change", function (e) {
 
     let file = e.target.files[0];
-    if (!file) return;
+    let img = new Image();
 
-    let reader = new FileReader();
+    img.onload = function () {
 
-    reader.onload = function (event) {
-        let img = new Image();
+        let canvas = document.getElementById("canvasInput");
+        let ctx = canvas.getContext("2d");
 
-        img.onload = function () {
+        canvas.width = img.width;
+        canvas.height = img.height;
 
-            // Show original
-            let canvasInput = document.getElementById("canvasInput");
-            canvasInput.width = img.width;
-            canvasInput.height = img.height;
-            canvasInput.getContext("2d").drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0);
 
-            // temp canvas for OpenCV
-            let temp = document.createElement("canvas");
-            temp.width = img.width;
-            temp.height = img.height;
-            temp.getContext("2d").drawImage(img, 0, 0);
-
-            if (src) src.delete();
-            src = cv.imread(temp);
-
-            document.getElementById("status").innerText =
-                "Image loaded! Click Generate Features.";
-        };
-
-        img.src = event.target.result;
+        src = cv.imread(canvas);
     };
 
-    reader.readAsDataURL(file);
+    img.src = URL.createObjectURL(file);
 });
 
-// Generate features
-document.getElementById("generateBtn").addEventListener("click", function () {
+// Grayscale
+function processGray() {
 
-    if (!cvReady) {
-        alert("OpenCV not ready");
-        return;
-    }
+    if (!cvReady || !src) return;
 
-    if (!src) {
-        alert("Upload an image first!");
-        return;
-    }
-
-    // Convert to grayscale
     let gray = new cv.Mat();
+
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     cv.imshow("canvasGray", gray);
 
-    // 🔥 UPDATED ORB (HIGH DENSITY)
-    let keypoints = new cv.KeyPointVector();
-    let descriptors = new cv.Mat();
+    gray.delete();
+}
 
-    let orb = new cv.ORB(2500, 1.2, 30);
-    orb.setFastThreshold(8);
-    orb.setEdgeThreshold(5);
+// 🔥 CUSTOM FEATURE TRACKING
+function customFeatureTracking() {
 
-    orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
+    let canvas = document.getElementById("canvasInput");
+    let ctx = canvas.getContext("2d");
 
-    // Draw features (richer visualization)
-    let output = new cv.Mat();
-    cv.drawKeypoints(
-        src,
-        keypoints,
-        output,
-        [0, 255, 0, 255],
-        cv.DrawMatchesFlags_DRAW_RICH_KEYPOINTS
-    );
+    let width = canvas.width;
+    let height = canvas.height;
 
-    cv.imshow("canvasOutput", output);
+    let imageData = ctx.getImageData(0, 0, width, height);
+    let data = imageData.data;
 
-    let count = keypoints.size();
+    let currentPoints = [];
+    let threshold = 40;
 
-    // AR object switching
-    document.getElementById("cube").setAttribute("visible", false);
-    document.getElementById("sphere").setAttribute("visible", false);
-    document.getElementById("cone").setAttribute("visible", false);
+    // Detect features
+    for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
 
-    if (count < 200) {
-        document.getElementById("cube").setAttribute("visible", true);
-    } else if (count < 600) {
-        document.getElementById("sphere").setAttribute("visible", true);
-    } else {
-        document.getElementById("cone").setAttribute("visible", true);
+            let i = (y * width + x) * 4;
+
+            let center = data[i];
+            let right = data[i + 4];
+            let bottom = data[i + width * 4];
+
+            if (Math.abs(center - right) > threshold &&
+                Math.abs(center - bottom) > threshold) {
+
+                currentPoints.push({ x, y });
+            }
+        }
     }
 
+    let outCanvas = document.getElementById("canvasOutput");
+    let outCtx = outCanvas.getContext("2d");
+
+    outCanvas.width = width;
+    outCanvas.height = height;
+    outCtx.putImageData(imageData, 0, 0);
+
+    // 🔥 TRACKING
+    previousPoints.forEach(prev => {
+
+        let closest = null;
+        let minDist = 20;
+
+        currentPoints.forEach(curr => {
+            let dx = prev.x - curr.x;
+            let dy = prev.y - curr.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < minDist) {
+                minDist = dist;
+                closest = curr;
+            }
+        });
+
+        if (closest) {
+            outCtx.beginPath();
+            outCtx.moveTo(prev.x, prev.y);
+            outCtx.lineTo(closest.x, closest.y);
+            outCtx.strokeStyle = "lime";
+            outCtx.stroke();
+        }
+    });
+
+    // Draw points
+    currentPoints.forEach(p => {
+        outCtx.beginPath();
+        outCtx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+        outCtx.fillStyle = "red";
+        outCtx.fill();
+    });
+
+    previousPoints = currentPoints;
+
     document.getElementById("status").innerText =
-        `Detected ${count} ORB features`;
+        "Custom tracking running!";
+}
 
-    // Cleanup
+// Save canvas
+function saveImage(canvasId, filename) {
+    let canvas = document.getElementById(canvasId);
+    let link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+// 🔥 Marker Generator
+document.getElementById("generateMarkerBtn").addEventListener("click", function () {
+
+    if (!src) {
+        alert("Upload image first!");
+        return;
+    }
+
+    let gray = new cv.Mat();
+    let edges = new cv.Mat();
+    let marker = new cv.Mat();
+
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.equalizeHist(gray, gray);
+    cv.Canny(gray, edges, 50, 150);
+    cv.addWeighted(gray, 0.7, edges, 0.3, 0, marker);
+
+    cv.imshow("canvasMarker", marker);
+
     gray.delete();
-    keypoints.delete();
-    descriptors.delete();
-    output.delete();
+    edges.delete();
+    marker.delete();
+
+    document.getElementById("status").innerText =
+        "Feature marker generated!";
 });
 
-// Save buttons
-document.getElementById("saveGrayBtn").addEventListener("click", function () {
-    saveImage("canvasGray", "grayscale.png");
-});
-
-document.getElementById("saveOrbBtn").addEventListener("click", function () {
-    saveImage("canvasOutput", "orb_features.png");
+// Save marker
+document.getElementById("saveMarkerBtn").addEventListener("click", function () {
+    saveImage("canvasMarker", "marker.png");
 });
