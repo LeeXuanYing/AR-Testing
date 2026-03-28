@@ -57,34 +57,11 @@
     <!-- AR SECTION -->
     <h2>AR Scene</h2>
 
-    <div class="ar-container">
-        <div class="ar-wrapper">
-
-            <a-scene
-                embedded
-                vr-mode-ui="enabled: false"
-                renderer="logarithmicDepthBuffer: true;"
-                arjs="sourceType: webcam; debugUIEnabled: false;"
-            >
-
-                <a-marker type="pattern" url="marker.patt">
-
-                    <a-box id="cube" position="0 0.5 0" color="#4CC3D9"></a-box>
-
-                    <a-sphere id="sphere" position="0 0.5 0"
-                              radius="0.4" color="#EF2D5E"
-                              visible="false"></a-sphere>
-
-                    <a-cone id="cone" position="0 0.5 0"
-                            radius-bottom="0.4" height="0.8"
-                            color="#FFC65D"
-                            visible="false"></a-cone>
-
-                </a-marker>
-
-                <a-entity camera></a-entity>
-
-            </a-scene>
+<div style="margin-top:20px;">
+    <a href="ar.html">
+        <button>Open AR Camera</button>
+    </a>
+</div>
 
         </div>
     </div>
