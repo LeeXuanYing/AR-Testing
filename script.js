@@ -83,7 +83,7 @@ document.getElementById("generateBtn").addEventListener("click", function () {
     let keypoints = new cv.KeyPointVector();
     let descriptors = new cv.Mat();
 
-    let orb = new cv.ORB(2500, 1.2, 12);
+    let orb = new cv.ORB(2500, 1.2, 30);
     orb.setFastThreshold(8);
     orb.setEdgeThreshold(5);
 
