@@ -36,13 +36,13 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
 
         img.onload = function () {
 
-            // Original
+            // Show original
             let canvasInput = document.getElementById("canvasInput");
             canvasInput.width = img.width;
             canvasInput.height = img.height;
             canvasInput.getContext("2d").drawImage(img, 0, 0);
 
-            // temp for processing
+            // temp canvas for OpenCV
             let temp = document.createElement("canvas");
             temp.width = img.width;
             temp.height = img.height;
@@ -74,47 +74,59 @@ document.getElementById("generateBtn").addEventListener("click", function () {
         return;
     }
 
-    // Grayscale
+    // Convert to grayscale
     let gray = new cv.Mat();
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     cv.imshow("canvasGray", gray);
 
-    // ORB
+    // 🔥 UPDATED ORB (HIGH DENSITY)
     let keypoints = new cv.KeyPointVector();
     let descriptors = new cv.Mat();
-    let orb = new cv.ORB();
+
+    let orb = new cv.ORB(2500, 1.2, 12);
+    orb.setFastThreshold(8);
+    orb.setEdgeThreshold(5);
 
     orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
 
+    // Draw features (richer visualization)
     let output = new cv.Mat();
-    cv.drawKeypoints(src, keypoints, output, [255, 0, 0, 255]);
+    cv.drawKeypoints(
+        src,
+        keypoints,
+        output,
+        [0, 255, 0, 255],
+        cv.DrawMatchesFlags_DRAW_RICH_KEYPOINTS
+    );
+
     cv.imshow("canvasOutput", output);
 
     let count = keypoints.size();
 
-    // AR switching
+    // AR object switching
     document.getElementById("cube").setAttribute("visible", false);
     document.getElementById("sphere").setAttribute("visible", false);
     document.getElementById("cone").setAttribute("visible", false);
 
-    if (count < 100) {
+    if (count < 200) {
         document.getElementById("cube").setAttribute("visible", true);
-    } else if (count < 300) {
+    } else if (count < 600) {
         document.getElementById("sphere").setAttribute("visible", true);
     } else {
         document.getElementById("cone").setAttribute("visible", true);
     }
 
     document.getElementById("status").innerText =
-        `Detected ${count} features`;
+        `Detected ${count} ORB features`;
 
+    // Cleanup
     gray.delete();
     keypoints.delete();
     descriptors.delete();
     output.delete();
 });
 
-// SAVE BUTTON EVENTS (FIXED)
+// Save buttons
 document.getElementById("saveGrayBtn").addEventListener("click", function () {
     saveImage("canvasGray", "grayscale.png");
 });
