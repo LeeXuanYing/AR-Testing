@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Scene</title>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            background: #4CC3D9;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
+    <!-- AR.js -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+</head>
+
+<body>
+
+<!-- Back button -->
+<div class="top-bar">
+    <a href="index.html">
+        <button>⬅ Back</button>
+    </a>
+</div>
+
+<a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+>
+
+    <a-marker type="pattern" url="marker.patt">
+
+        <a-box position="0 0.5 0" color="#4CC3D9"></a-box>
+
+        <a-sphere position="0 0.5 0"
+                  radius="0.4"
+                  color="#EF2D5E"
+                  visible="false"></a-sphere>
+
+        <a-cone position="0 0.5 0"
+                radius-bottom="0.4"
+                height="0.8"
+                color="#FFC65D"
+                visible="false"></a-cone>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+
+</a-scene>
+
+</body>
+</html>
