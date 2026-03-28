@@ -18,71 +18,81 @@
 </head>
 
 <body>
-    <div class="container">
 
-        <h1>AR Feature-based Marker Tracker</h1>
-        <p id="status">Loading OpenCV...</p>
+<div class="container">
 
-        <!-- Controls -->
-        <div class="controls">
-            <input type="file" id="fileInput" accept="image/*">
-            <button id="generateBtn">Generate Features</button>
+    <h1>AR Feature-based Marker Tracker</h1>
+    <p id="status">Loading OpenCV...</p>
+
+    <!-- Controls -->
+    <div class="controls">
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="generateBtn">Generate Features</button>
+    </div>
+
+    <!-- Image Processing -->
+    <h2>Image Processing</h2>
+
+    <div class="canvas-grid">
+
+        <div>
+            <h3>Original</h3>
+            <canvas id="canvasInput"></canvas>
         </div>
 
-        <!-- Image Processing -->
-        <h2>Image Processing</h2>
-
-        <div class="canvas-grid">
-
-            <div>
-                <h3>Original</h3>
-                <canvas id="canvasInput"></canvas>
-            </div>
-
-            <div>
-                <h3>Grayscale</h3>
-                <canvas id="canvasGray"></canvas>
-                <button id="saveGrayBtn">Save Grayscale</button>
-            </div>
-
-            <div>
-                <h3>ORB Features</h3>
-                <canvas id="canvasOutput"></canvas>
-                <button id="saveOrbBtn">Save ORB Features</button>
-            </div>
-
+        <div>
+            <h3>Grayscale</h3>
+            <canvas id="canvasGray"></canvas>
+            <button id="saveGrayBtn">Save Grayscale</button>
         </div>
 
-        <!-- AR -->
-        <h2>AR Scene</h2>
-
-        <div class="ar-container">
-            <div class="ar-wrapper">
-                <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-
-                    <a-marker type="pattern" url="marker.patt">
-
-                        <a-box id="cube" position="0 0.5 0" color="#4CC3D9"></a-box>
-
-                        <a-sphere id="sphere" position="0 0.5 0"
-                                  radius="0.4" color="#EF2D5E"
-                                  visible="false"></a-sphere>
-
-                        <a-cone id="cone" position="0 0.5 0"
-                                radius-bottom="0.4" height="0.8"
-                                color="#FFC65D"
-                                visible="false"></a-cone>
-
-                    </a-marker>
-
-                    <a-entity camera></a-entity>
-                </a-scene>
-            </div>
+        <div>
+            <h3>ORB Features</h3>
+            <canvas id="canvasOutput"></canvas>
+            <button id="saveOrbBtn">Save ORB Features</button>
         </div>
 
     </div>
 
-    <!-- JS LAST -->
-    <script src="script.js"></script>
+    <!-- AR SECTION -->
+    <h2>AR Scene</h2>
+
+    <div class="ar-container">
+        <div class="ar-wrapper">
+
+            <a-scene
+                embedded
+                vr-mode-ui="enabled: false"
+                renderer="logarithmicDepthBuffer: true;"
+                arjs="sourceType: webcam; debugUIEnabled: false;"
+            >
+
+                <a-marker type="pattern" url="marker.patt">
+
+                    <a-box id="cube" position="0 0.5 0" color="#4CC3D9"></a-box>
+
+                    <a-sphere id="sphere" position="0 0.5 0"
+                              radius="0.4" color="#EF2D5E"
+                              visible="false"></a-sphere>
+
+                    <a-cone id="cone" position="0 0.5 0"
+                            radius-bottom="0.4" height="0.8"
+                            color="#FFC65D"
+                            visible="false"></a-cone>
+
+                </a-marker>
+
+                <a-entity camera></a-entity>
+
+            </a-scene>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- JS LAST -->
+<script src="script.js"></script>
+
 </body>
 </html>
