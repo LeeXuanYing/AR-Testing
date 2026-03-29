@@ -3,75 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Scene</title>
-
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-
-        .top-bar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-        }
-
-        button {
-            padding: 10px 15px;
-            border: none;
-            background: #4CC3D9;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Custom AR Scene</title>
 
     <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 
-    <!-- AR.js -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-</head>
+    <!-- OpenCV -->
+    <script async src="opencv.js" onload="onOpenCvReady()"></script>
 
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #status { position: absolute; top: 10px; left: 10px; color: white; z-index: 10; }
+        #canvasAR { position: absolute; top: 0; left: 0; z-index: 1; }
+    </style>
+</head>
 <body>
 
-<!-- Back button -->
-<div class="top-bar">
-    <a href="index.html">
-        <button>⬅ Back</button>
-    </a>
-</div>
+<p id="status">Loading OpenCV...</p>
+<canvas id="canvasAR"></canvas>
 
-<a-scene
-    embedded
-    vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false;"
->
-
-    <a-marker type="pattern" url="marker.patt">
-
-        <a-box position="0 0.5 0" color="#4CC3D9"></a-box>
-
-        <a-sphere position="0 0.5 0"
-                  radius="0.4"
-                  color="#EF2D5E"
-                  visible="false"></a-sphere>
-
-        <a-cone position="0 0.5 0"
-                radius-bottom="0.4"
-                height="0.8"
-                color="#FFC65D"
-                visible="false"></a-cone>
-
-    </a-marker>
-
-    <a-entity camera></a-entity>
-
+<!-- A-Frame scene -->
+<a-scene embedded vr-mode-ui="enabled: false" renderer="antialias: true" id="aframeScene">
+    <a-entity id="cube" geometry="primitive: box" material="color: red" position="0 0 -1" scale="0.1 0.1 0.1"></a-entity>
 </a-scene>
 
+<script>
+let video = document.createElement("video");
+video.setAttribute("autoplay", true);
+video.setAttribute("playsinline", true);
+
+const canvasAR = document.getElementById("canvasAR");
+const ctxAR = canvasAR.getContext("2d");
+
+let orbKeypoints = [];
+let orbDescriptors = null;
+let srcMarker = null;
+
+// Access webcam
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+.then(stream => {
+    video.srcObject = stream;
+    video.play();
+})
+.catch(err => {
+    alert("Cannot access camera: " + err);
+});
+
+function onOpenCvReady() {
+    document.getElementById("status").innerText = "OpenCV Loaded.";
+
+    // Load your marker image from previous page (marker.png)
+    let img = new Image();
+    img.onload = () => {
+        canvasAR.width = img.width;
+        canvasAR.height = img.height;
+
+        srcMarker = cv.imread(img);
+
+        // Extract ORB keypoints from marker
+        let gray = new cv.Mat();
+        cv.cvtColor(srcMarker, gray, cv.COLOR_RGBA2GRAY);
+
+        orbKeypoints = new cv.KeyPointVector();
+        orbDescriptors = new cv.Mat();
+        let orb = new cv.ORB(1500, 1.2, 12);
+        orb.setFastThreshold(8);
+        orb.setEdgeThreshold(5);
+        orb.detectAndCompute(gray, new cv.Mat(), orbKeypoints, orbDescriptors);
+
+        gray.delete();
+
+        // Start custom tracking loop
+        requestAnimationFrame(trackFrame);
+    };
+    img.src = "marker.png"; // Make sure your generated marker is uploaded here
+}
+
+// Custom tracking function
+function trackFrame() {
+    if (!srcMarker) {
+        requestAnimationFrame(trackFrame);
+        return;
+    }
+
+    let capFrame = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
+    let tempMat = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
+
+    // Draw video on canvas
+    canvasAR.width = video.videoWidth;
+    canvasAR.height = video.videoHeight;
+    ctxAR.drawImage(video, 0, 0, canvasAR.width, canvasAR.height);
+    srcFrame = cv.imread(canvasAR);
+
+    // Convert frame to gray
+    let grayFrame = new cv.Mat();
+    cv.cvtColor(srcFrame, grayFrame, cv.COLOR_RGBA2GRAY);
+
+    // Detect ORB keypoints on live frame
+    let keypoints = new cv.KeyPointVector();
+    let descriptors = new cv.Mat();
+    let orb = new cv.ORB(1500, 1.2, 12);
+    orb.setFastThreshold(8);
+    orb.setEdgeThreshold(5);
+    orb.detectAndCompute(grayFrame, new cv.Mat(), keypoints, descriptors);
+
+    // 🔹 Simple custom tracking: find closest keypoints to marker keypoints
+    let matchedPoints = [];
+    for (let i = 0; i < orbKeypoints.size(); i++) {
+        let mp = orbKeypoints.get(i).pt;
+        let closest = null;
+        let minDist = 1e6;
+        for (let j = 0; j < keypoints.size(); j++) {
+            let kp = keypoints.get(j).pt;
+            let dx = mp.x - kp.x;
+            let dy = mp.y - kp.y;
+            let dist = dx*dx + dy*dy;
+            if (dist < minDist) {
+                minDist = dist;
+                closest = kp;
+            }
+        }
+        if (closest) matchedPoints.push(closest);
+    }
+
+    // Estimate marker position (center of matched points)
+    let sumX = 0, sumY = 0;
+    for (let p of matchedPoints) { sumX += p.x; sumY += p.y; }
+    let cx = matchedPoints.length > 0 ? sumX / matchedPoints.length : canvasAR.width/2;
+    let cy = matchedPoints.length > 0 ? sumY / matchedPoints.length : canvasAR.height/2;
+
+    // Map to A-Frame cube position
+    let cube = document.getElementById("cube");
+    cube.setAttribute("position", {
+        x: (cx / canvasAR.width - 0.5),
+        y: -(cy / canvasAR.height - 0.5),
+        z: -1
+    });
+
+    srcFrame.delete();
+    grayFrame.delete();
+    keypoints.delete();
+    descriptors.delete();
+    tempMat.delete();
+    capFrame.delete();
+
+    requestAnimationFrame(trackFrame);
+}
+</script>
 </body>
 </html>
