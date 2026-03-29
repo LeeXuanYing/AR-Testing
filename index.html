@@ -2,58 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Custom Feature Tracking AR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Feature-based Tracker</title>
+
     <link rel="stylesheet" href="style.css">
 
     <!-- OpenCV -->
-    <script async src="opencv.js"></script>
+    <script async src="opencv.js" onload="onOpenCvReady()"></script>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
+    <!-- AR.js -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 </head>
 
 <body>
 
-<h2>Custom Feature Detection & Tracking (No ORB)</h2>
+<div class="container">
 
-<p id="status">Loading OpenCV...</p>
+    <h1>AR Feature-based Marker Tracker</h1>
+    <p id="status">Loading OpenCV...</p>
 
-<!-- Upload -->
-<input type="file" id="imageInput">
-
-<br><br>
-
-<div class="canvas-container">
-
-    <div>
-        <h3>Original</h3>
-        <canvas id="canvasInput"></canvas>
+    <!-- Controls -->
+    <div class="controls">
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="generateBtn">Generate Features</button>
     </div>
 
-    <div>
-        <h3>Grayscale</h3>
-        <canvas id="canvasGray"></canvas>
-        <br>
-        <button onclick="processGray()">Convert</button>
-        <button onclick="saveImage('canvasGray','gray.png')">Save</button>
+    <!-- Image Processing -->
+    <h2>Image Processing</h2>
+
+    <div class="canvas-grid">
+
+        <div>
+            <h3>Original</h3>
+            <canvas id="canvasInput"></canvas>
+        </div>
+
+        <div>
+            <h3>Grayscale</h3>
+            <canvas id="canvasGray"></canvas>
+            <button id="saveGrayBtn">Save Grayscale</button>
+        </div>
+
+        <div>
+            <h3>ORB Features</h3>
+            <canvas id="canvasOutput"></canvas>
+            <button id="saveOrbBtn">Save ORB Features</button>
+        </div>
+
     </div>
 
-    <div>
-        <h3>Feature Tracking</h3>
-        <canvas id="canvasOutput"></canvas>
-        <br>
-        <button onclick="customFeatureTracking()">Start Tracking</button>
-        <button onclick="saveImage('canvasOutput','tracking.png')">Save</button>
+    <!-- AR SECTION -->
+    <h2>AR Scene</h2>
+
+<div style="margin-top:20px;">
+    <a href="ar.html">
+        <button>Open AR Camera</button>
+    </a>
+</div>
+
+        </div>
     </div>
 
 </div>
 
-<br>
-
-<h3>Generate Feature Marker</h3>
-<button id="generateMarkerBtn">Generate Marker</button>
-<br><br>
-<canvas id="canvasMarker"></canvas>
-<br>
-<button id="saveMarkerBtn">Save Marker</button>
-
+<!-- JS LAST -->
 <script src="script.js"></script>
 
 </body>
