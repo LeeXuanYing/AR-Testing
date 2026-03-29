@@ -1,172 +1,159 @@
-let cvReady = false;
-let src = null;
-let previousPoints = [];
+let fileInput = document.getElementById("fileInput");
+let generateBtn = document.getElementById("generateBtn");
 
-// OpenCV ready
-function onOpenCvReady() {
-    cvReady = true;
-    document.getElementById("status").innerText = "OpenCV Ready!";
-}
+let canvasInput = document.getElementById("canvasInput");
+let ctxInput = canvasInput.getContext("2d");
 
-// Wait until OpenCV loads
-if (typeof cv !== "undefined") {
-    onOpenCvReady();
-} else {
-    document.addEventListener("opencvready", onOpenCvReady);
-}
+let canvasGray = document.getElementById("canvasGray");
+let ctxGray = canvasGray.getContext("2d");
+
+let canvasORB = document.getElementById("canvasORB");
+let ctxORB = canvasORB.getContext("2d");
+
+let canvasMarker = document.getElementById("canvasMarker");
+let ctxMarker = canvasMarker.getContext("2d");
+
+let generateMarkerBtn = document.getElementById("generateMarkerBtn");
+let saveMarkerBtn = document.getElementById("saveMarkerBtn");
+
+let src, orbKeypoints, orbDescriptors;
 
 // Load image
-document.getElementById("imageInput").addEventListener("change", function (e) {
-
+fileInput.addEventListener("change", (e) => {
     let file = e.target.files[0];
+    if (!file) return;
     let img = new Image();
-
-    img.onload = function () {
-
-        let canvas = document.getElementById("canvasInput");
-        let ctx = canvas.getContext("2d");
-
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        ctx.drawImage(img, 0, 0);
-
-        src = cv.imread(canvas);
+    img.onload = () => {
+        canvasInput.width = img.width;
+        canvasInput.height = img.height;
+        ctxInput.drawImage(img, 0, 0);
+        src = cv.imread(canvasInput);
     };
-
     img.src = URL.createObjectURL(file);
 });
 
-// Grayscale
-function processGray() {
+// Generate ORB features
+function generateORB() {
+    if (!src) return alert("Please upload an image first!");
 
-    if (!cvReady || !src) return;
-
+    // Grayscale
     let gray = new cv.Mat();
-
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    cv.imshow("canvasGray", gray);
+    cv.imshow(canvasGray, gray);
+
+    // ORB Feature Extraction
+    orbKeypoints = new cv.KeyPointVector();
+    orbDescriptors = new cv.Mat();
+    let orb = new cv.ORB(1500, 1.2, 12);
+    orb.setFastThreshold(8);
+    orb.setEdgeThreshold(5);
+    orb.detectAndCompute(gray, new cv.Mat(), orbKeypoints, orbDescriptors);
+
+    // Draw ORB keypoints
+    let orbOutput = new cv.Mat();
+    cv.drawKeypoints(
+        src,
+        orbKeypoints,
+        orbOutput,
+        [0, 255, 0, 255],
+        cv.DrawMatchesFlags_DRAW_RICH_KEYPOINTS
+    );
+    cv.imshow(canvasORB, orbOutput);
 
     gray.delete();
+    orbOutput.delete();
 }
 
-// 🔥 CUSTOM FEATURE TRACKING
-function customFeatureTracking() {
+// CUSTOM TRACKING FUNCTION
+// Tracks marker based on ORB keypoints between two frames
+let prevGray = null;
+let prevKeypoints = [];
 
-    let canvas = document.getElementById("canvasInput");
-    let ctx = canvas.getContext("2d");
+function startTracking(video) {
+    const cap = new cv.VideoCapture(video);
 
-    let width = canvas.width;
-    let height = canvas.height;
+    function processFrame() {
+        let frame = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+        cap.read(frame);
 
-    let imageData = ctx.getImageData(0, 0, width, height);
-    let data = imageData.data;
+        // Convert to gray
+        let gray = new cv.Mat();
+        cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
 
-    let currentPoints = [];
-    let threshold = 40;
+        // Detect ORB keypoints for current frame
+        let keypoints = new cv.KeyPointVector();
+        let descriptors = new cv.Mat();
+        let orb = new cv.ORB(1500, 1.2, 12);
+        orb.setFastThreshold(8);
+        orb.setEdgeThreshold(5);
+        orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
 
-    // Detect features
-    for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
-
-            let i = (y * width + x) * 4;
-
-            let center = data[i];
-            let right = data[i + 4];
-            let bottom = data[i + width * 4];
-
-            if (Math.abs(center - right) > threshold &&
-                Math.abs(center - bottom) > threshold) {
-
-                currentPoints.push({ x, y });
+        // CUSTOM TRACKING: find closest keypoints to prev ORB keypoints
+        let trackedPoints = [];
+        if (prevKeypoints.length > 0) {
+            for (let i = 0; i < prevKeypoints.length; i++) {
+                let pk = prevKeypoints[i];
+                let closest = null;
+                let minDist = 1e6;
+                for (let j = 0; j < keypoints.size(); j++) {
+                    let ck = keypoints.get(j).pt;
+                    let dx = pk.x - ck.x;
+                    let dy = pk.y - ck.y;
+                    let dist = dx * dx + dy * dy;
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = ck;
+                    }
+                }
+                if (closest) trackedPoints.push(closest);
             }
         }
-    }
 
-    let outCanvas = document.getElementById("canvasOutput");
-    let outCtx = outCanvas.getContext("2d");
-
-    outCanvas.width = width;
-    outCanvas.height = height;
-    outCtx.putImageData(imageData, 0, 0);
-
-    // 🔥 TRACKING
-    previousPoints.forEach(prev => {
-
-        let closest = null;
-        let minDist = 20;
-
-        currentPoints.forEach(curr => {
-            let dx = prev.x - curr.x;
-            let dy = prev.y - curr.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < minDist) {
-                minDist = dist;
-                closest = curr;
-            }
-        });
-
-        if (closest) {
-            outCtx.beginPath();
-            outCtx.moveTo(prev.x, prev.y);
-            outCtx.lineTo(closest.x, closest.y);
-            outCtx.strokeStyle = "lime";
-            outCtx.stroke();
+        // Draw tracked points
+        for (let i = 0; i < trackedPoints.length; i++) {
+            let pt = trackedPoints[i];
+            cv.circle(frame, new cv.Point(pt.x, pt.y), 4, [255, 0, 0, 255], 2);
         }
-    });
 
-    // Draw points
-    currentPoints.forEach(p => {
-        outCtx.beginPath();
-        outCtx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
-        outCtx.fillStyle = "red";
-        outCtx.fill();
-    });
+        cv.imshow(canvasMarker, frame);
 
-    previousPoints = currentPoints;
+        // Save current frame keypoints for next frame
+        prevKeypoints = [];
+        for (let i = 0; i < keypoints.size(); i++) {
+            prevKeypoints.push(keypoints.get(i).pt);
+        }
 
-    document.getElementById("status").innerText =
-        "Custom tracking running!";
-}
+        frame.delete();
+        gray.delete();
+        keypoints.delete();
+        descriptors.delete();
 
-// Save canvas
-function saveImage(canvasId, filename) {
-    let canvas = document.getElementById(canvasId);
-    let link = document.createElement("a");
-    link.download = filename;
-    link.href = canvas.toDataURL();
-    link.click();
-}
-
-// 🔥 Marker Generator
-document.getElementById("generateMarkerBtn").addEventListener("click", function () {
-
-    if (!src) {
-        alert("Upload image first!");
-        return;
+        requestAnimationFrame(processFrame);
     }
 
-    let gray = new cv.Mat();
-    let edges = new cv.Mat();
-    let marker = new cv.Mat();
+    processFrame();
+}
 
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    cv.equalizeHist(gray, gray);
-    cv.Canny(gray, edges, 50, 150);
-    cv.addWeighted(gray, 0.7, edges, 0.3, 0, marker);
+// Generate marker from ORB keypoints
+generateBtn.addEventListener("click", generateORB);
 
-    cv.imshow("canvasMarker", marker);
-
-    gray.delete();
-    edges.delete();
-    marker.delete();
-
-    document.getElementById("status").innerText =
-        "Feature marker generated!";
+generateMarkerBtn.addEventListener("click", () => {
+    if (!canvasORB.width) return alert("Generate ORB features first!");
+    canvasMarker.width = canvasORB.width;
+    canvasMarker.height = canvasORB.height;
+    ctxMarker.drawImage(canvasORB, 0, 0);
 });
 
 // Save marker
-document.getElementById("saveMarkerBtn").addEventListener("click", function () {
-    saveImage("canvasMarker", "marker.png");
+saveMarkerBtn.addEventListener("click", () => {
+    let link = document.createElement("a");
+    link.download = "marker.png";
+    link.href = canvasMarker.toDataURL();
+    link.click();
 });
+
+// OpenCV ready
+function onOpenCvReady() {
+    document.getElementById("status").innerText = "OpenCV loaded.";
+}
+
