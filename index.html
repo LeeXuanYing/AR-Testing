@@ -3,37 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marker Generator</title>
+    <title>AR Feature-based Tracker</title>
 
     <link rel="stylesheet" href="style.css">
 
+    <!-- OpenCV -->
     <script async src="opencv.js" onload="onOpenCvReady()"></script>
+
+    <!-- A-Frame (not needed here but safe to keep) -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
+    <!-- AR.js (NOT needed in index page, but keeping won't break) -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 </head>
 
 <body>
 
-<h1>Generate AR Marker</h1>
-<p id="status">Loading OpenCV...</p>
+<div class="container">
 
-<input type="file" id="fileInput" accept="image/*">
-<button id="generateBtn">Generate Features</button>
+    <h1>AR Feature-based Marker Tracker</h1>
+    <p id="status">Loading OpenCV...</p>
 
-<h3>Original</h3>
-<canvas id="canvasInput"></canvas>
+    <!-- Controls -->
+    <div class="controls">
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="generateBtn">Generate Features</button>
+    </div>
 
-<h3>Grayscale</h3>
-<canvas id="canvasGray"></canvas>
-<button id="saveGrayBtn">Save</button>
+    <!-- Image Processing -->
+    <h2>Image Processing</h2>
 
-<h3>ORB Features</h3>
-<canvas id="canvasORB"></canvas>
-<button id="saveORBBtn">Save</button>
+    <div class="canvas-grid">
 
-<br><br>
-<a href="ar.html">
-    <button>Open AR Camera</button>
-</a>
+        <div class="canvas-item">
+            <h3>Original</h3>
+            <canvas id="canvasInput"></canvas>
+        </div>
 
+        <div class="canvas-item">
+            <h3>Grayscale</h3>
+            <canvas id="canvasGray"></canvas>
+            <button id="saveGrayBtn">Save Grayscale</button>
+        </div>
+
+        <div class="canvas-item">
+            <h3>ORB Features</h3>
+            <!-- 🔥 IMPORTANT: match script.js ID -->
+            <canvas id="canvasORB"></canvas>
+            <button id="saveORBBtn">Save ORB Features</button>
+        </div>
+
+    </div>
+
+    <!-- AR SECTION -->
+    <h2>AR Scene</h2>
+
+    <div class="ar-section">
+        <a href="ar.html">
+            <button>Open AR Camera</button>
+        </a>
+    </div>
+
+</div>
+
+<!-- JS LAST -->
 <script src="script.js"></script>
 
 </body>
