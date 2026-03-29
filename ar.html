@@ -3,152 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom AR Scene</title>
+    <title>AR Tracking</title>
+
+    <script async src="opencv.js" onload="onOpenCvReady()"></script>
 
     <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-
-    <!-- OpenCV -->
-    <script async src="opencv.js" onload="onOpenCvReady()"></script>
-
-    <style>
-        body { margin: 0; overflow: hidden; }
-        #status { position: absolute; top: 10px; left: 10px; color: white; z-index: 10; }
-        #canvasAR { position: absolute; top: 0; left: 0; z-index: 1; }
-    </style>
 </head>
+
 <body>
 
-<p id="status">Loading OpenCV...</p>
+<h2 id="status">Loading...</h2>
+
 <canvas id="canvasAR"></canvas>
 
-<!-- A-Frame scene -->
-<a-scene embedded vr-mode-ui="enabled: false" renderer="antialias: true" id="aframeScene">
-    <a-entity id="cube" geometry="primitive: box" material="color: red" position="0 0 -1" scale="0.1 0.1 0.1"></a-entity>
+<a-scene embedded>
+    <a-box color="red" position="0 0 -1" visible="false"></a-box>
 </a-scene>
 
-<script>
-let video = document.createElement("video");
-video.setAttribute("autoplay", true);
-video.setAttribute("playsinline", true);
+<script src="script-ar.js"></script>
 
-const canvasAR = document.getElementById("canvasAR");
-const ctxAR = canvasAR.getContext("2d");
-
-let orbKeypoints = [];
-let orbDescriptors = null;
-let srcMarker = null;
-
-// Access webcam
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-.then(stream => {
-    video.srcObject = stream;
-    video.play();
-})
-.catch(err => {
-    alert("Cannot access camera: " + err);
-});
-
-function onOpenCvReady() {
-    document.getElementById("status").innerText = "OpenCV Loaded.";
-
-    // Load your marker image from previous page (marker.png)
-    let img = new Image();
-    img.onload = () => {
-        canvasAR.width = img.width;
-        canvasAR.height = img.height;
-
-        srcMarker = cv.imread(img);
-
-        // Extract ORB keypoints from marker
-        let gray = new cv.Mat();
-        cv.cvtColor(srcMarker, gray, cv.COLOR_RGBA2GRAY);
-
-        orbKeypoints = new cv.KeyPointVector();
-        orbDescriptors = new cv.Mat();
-        let orb = new cv.ORB(1500, 1.2, 12);
-        orb.setFastThreshold(8);
-        orb.setEdgeThreshold(5);
-        orb.detectAndCompute(gray, new cv.Mat(), orbKeypoints, orbDescriptors);
-
-        gray.delete();
-
-        // Start custom tracking loop
-        requestAnimationFrame(trackFrame);
-    };
-    img.src = "marker.png"; // Make sure your generated marker is uploaded here
-}
-
-// Custom tracking function
-function trackFrame() {
-    if (!srcMarker) {
-        requestAnimationFrame(trackFrame);
-        return;
-    }
-
-    let capFrame = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-    let tempMat = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-
-    // Draw video on canvas
-    canvasAR.width = video.videoWidth;
-    canvasAR.height = video.videoHeight;
-    ctxAR.drawImage(video, 0, 0, canvasAR.width, canvasAR.height);
-    srcFrame = cv.imread(canvasAR);
-
-    // Convert frame to gray
-    let grayFrame = new cv.Mat();
-    cv.cvtColor(srcFrame, grayFrame, cv.COLOR_RGBA2GRAY);
-
-    // Detect ORB keypoints on live frame
-    let keypoints = new cv.KeyPointVector();
-    let descriptors = new cv.Mat();
-    let orb = new cv.ORB(1500, 1.2, 12);
-    orb.setFastThreshold(8);
-    orb.setEdgeThreshold(5);
-    orb.detectAndCompute(grayFrame, new cv.Mat(), keypoints, descriptors);
-
-    // 🔹 Simple custom tracking: find closest keypoints to marker keypoints
-    let matchedPoints = [];
-    for (let i = 0; i < orbKeypoints.size(); i++) {
-        let mp = orbKeypoints.get(i).pt;
-        let closest = null;
-        let minDist = 1e6;
-        for (let j = 0; j < keypoints.size(); j++) {
-            let kp = keypoints.get(j).pt;
-            let dx = mp.x - kp.x;
-            let dy = mp.y - kp.y;
-            let dist = dx*dx + dy*dy;
-            if (dist < minDist) {
-                minDist = dist;
-                closest = kp;
-            }
-        }
-        if (closest) matchedPoints.push(closest);
-    }
-
-    // Estimate marker position (center of matched points)
-    let sumX = 0, sumY = 0;
-    for (let p of matchedPoints) { sumX += p.x; sumY += p.y; }
-    let cx = matchedPoints.length > 0 ? sumX / matchedPoints.length : canvasAR.width/2;
-    let cy = matchedPoints.length > 0 ? sumY / matchedPoints.length : canvasAR.height/2;
-
-    // Map to A-Frame cube position
-    let cube = document.getElementById("cube");
-    cube.setAttribute("position", {
-        x: (cx / canvasAR.width - 0.5),
-        y: -(cy / canvasAR.height - 0.5),
-        z: -1
-    });
-
-    srcFrame.delete();
-    grayFrame.delete();
-    keypoints.delete();
-    descriptors.delete();
-    tempMat.delete();
-    capFrame.delete();
-
-    requestAnimationFrame(trackFrame);
-}
-</script>
 </body>
 </html>
