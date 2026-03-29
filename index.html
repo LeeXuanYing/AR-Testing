@@ -3,72 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Feature-based Tracker</title>
+    <title>Marker Generator</title>
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- OpenCV -->
     <script async src="opencv.js" onload="onOpenCvReady()"></script>
-
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-
-    <!-- AR.js -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 </head>
 
 <body>
 
-<div class="container">
+<h1>Generate AR Marker</h1>
+<p id="status">Loading OpenCV...</p>
 
-    <h1>AR Feature-based Marker Tracker</h1>
-    <p id="status">Loading OpenCV...</p>
+<input type="file" id="fileInput" accept="image/*">
+<button id="generateBtn">Generate Features</button>
 
-    <!-- Controls -->
-    <div class="controls">
-        <input type="file" id="fileInput" accept="image/*">
-        <button id="generateBtn">Generate Features</button>
-    </div>
+<h3>Original</h3>
+<canvas id="canvasInput"></canvas>
 
-    <!-- Image Processing -->
-    <h2>Image Processing</h2>
+<h3>Grayscale</h3>
+<canvas id="canvasGray"></canvas>
+<button id="saveGrayBtn">Save</button>
 
-    <div class="canvas-grid">
+<h3>ORB Features</h3>
+<canvas id="canvasORB"></canvas>
+<button id="saveORBBtn">Save</button>
 
-        <div>
-            <h3>Original</h3>
-            <canvas id="canvasInput"></canvas>
-        </div>
+<br><br>
+<a href="ar.html">
+    <button>Open AR Camera</button>
+</a>
 
-        <div>
-            <h3>Grayscale</h3>
-            <canvas id="canvasGray"></canvas>
-            <button id="saveGrayBtn">Save Grayscale</button>
-        </div>
-
-        <div>
-            <h3>ORB Features</h3>
-            <canvas id="canvasOutput"></canvas>
-            <button id="saveOrbBtn">Save ORB Features</button>
-        </div>
-
-    </div>
-
-    <!-- AR SECTION -->
-    <h2>AR Scene</h2>
-
-<div style="margin-top:20px;">
-    <a href="ar.html">
-        <button>Open AR Camera</button>
-    </a>
-</div>
-
-        </div>
-    </div>
-
-</div>
-
-<!-- JS LAST -->
 <script src="script.js"></script>
 
 </body>
